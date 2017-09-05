@@ -1,0 +1,167 @@
+<?php
+
+/**
+ * @file
+ * The main file for the breadcrumb_dropdown_menu module.
+ */
+
+use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\node\NodeTypeInterface;
+use Drupal\Core\Template\Attribute;
+
+/**
+ * Implements hook_help().
+ */
+function breadcrumb_dropdown_menu_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case 'admin/config/modules#description':
+      $output = t('Provides collapsible blocks of menu items.');
+      break;
+  }
+
+  return $output;
+}
+
+/**
+ * Implements templates_preprocess_breadcrumb().
+ */
+function breadcrumb_dropdown_menu_preprocess_breadcrumb(&$variables) {
+  $isAdminRoute = \Drupal::service('router.admin_context')->isAdminRoute();
+  $current_uri = \Drupal::request()->getRequestUri();
+  $variables['breadcrumb'] = [];
+
+  $config = \Drupal::config('breadcrumb_dropdown_menu.settings');
+  $max_len = $config->get('title_max_length');
+
+  /** @var \Drupal\Core\Link $link */
+  foreach ($variables['links'] as $key => $link) {
+    $drop_down = [];
+    if (!empty($link->subtree) && !$isAdminRoute) {
+      foreach ($link->subtree as $key_tree => $subtree_link) {
+        $attributes = new Attribute();
+        $uri = $subtree_link->getUrl()->toString();
+        if ($uri == $current_uri) {
+          $attributes = $attributes->addClass('is-active');
+        }
+
+        // Truncate.
+        $title = $subtree_link->getText();
+        if ($max_len && is_numeric($max_len)) {
+          $title = Unicode::truncate($title, $max_len, TRUE, TRUE, 10);
+        }
+
+        $drop_down[$key_tree] = [
+          'text' => $title,
+          'url' => $subtree_link->getUrl()->toString(),
+          'attributes' => $attributes,
+        ];
+      }
+    }
+
+    // Truncate.
+    $title = $link->getText();
+    if (is_array($title)) {
+      $str = render($title)->__toString();
+      $title = new TranslatableMarkup($str);
+    }
+
+    if ($max_len && is_numeric($max_len)) {
+      $title = Unicode::truncate($title, $max_len, TRUE, TRUE, 10);
+    }
+
+    if (!$isAdminRoute) {
+      $attributes = new Attribute();
+      if (!empty($drop_down)) {
+        $attributes = $attributes->addClass('drop-down');
+      }
+      if ($key == (count($variables['links']) - 1)) {
+        $attributes = $attributes->addClass('is-active');
+      }
+      $variables['breadcrumb'][$key] = [
+        'text' => strip_tags($title),
+        'url' => $link->getUrl()->toString(),
+        'drop_down' => $drop_down,
+        'attributes' => $attributes,
+      ];
+    }
+    else {
+      $variables['breadcrumb'][$key] = ['text' => strip_tags($title), 'url' => $link->getUrl()->toString()];
+    }
+
+  }
+
+  if (!$isAdminRoute) {
+    $variables['theme_hook_original'] = 'breadcrumb__dropdown_menu';
+    $variables['#attached']['library'] = ['breadcrumb_dropdown_menu/breadcrumb_dropdown_menu.breadcrumb_dropdown_menu.module'];
+  }
+}
+
+/**
+ * Implements hook_theme_suggestions_alter().
+ */
+function breadcrumb_dropdown_menu_theme_suggestions_alter(array &$suggestions, array $variables, $hook) {
+  if ($hook == 'breadcrumb') {
+    $suggestions[] = 'breadcrumb__dropdown_menu';
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for \Drupal\node\NodeTypeForm.
+ *
+ * Adds menu options to the node type form.
+ *
+ * @see NodeTypeForm::form()
+ * @see breadcrumb_dropdown_menu_form_node_type_form_submit()
+ */
+function breadcrumb_dropdown_menu_form_node_type_form_alter(&$form, FormStateInterface $form_state) {
+
+  /** @var \Drupal\node\NodeTypeInterface $type */
+  $type = $form_state->getFormObject()->getEntity();
+  /** @var \Drupal\Core\Menu\MenuParentFormSelectorInterface $menu_parent_selector */
+  $menu_parent_selector = \Drupal::service('menu.parent_form_selector');
+  $menu_names = menu_ui_get_menus();
+
+  $form['breadcrumb_dropdown_menu'] = [
+    '#type' => 'details',
+    '#title' => t('Parent Menu item'),
+    '#group' => 'additional_settings',
+  ];
+
+  $menus = \Drupal::configFactory()->get('breadcrumb_dropdown_menu.settings')->get('breadcrumb_dropdown_menus');
+  $available_menus = [];
+  foreach ($menus as $menu_name => $params) {
+    if (empty($params['enabled'])) {
+      continue;
+    }
+    $available_menus[$menu_name] = $menu_names[$menu_name];
+  }
+
+  $parent_element = $menu_parent_selector->parentSelectElement('main:', NULL, $available_menus);
+  $form['breadcrumb_dropdown_menu']['breadcrumb_dropdown_menu_parent_item'] = $parent_element;
+  $form['breadcrumb_dropdown_menu']['breadcrumb_dropdown_menu_parent_item']['#title'] = t('Parent item');
+  $form['breadcrumb_dropdown_menu']['breadcrumb_dropdown_menu_parent_item']['#default_value'] = $type->getThirdPartySetting('breadcrumb_dropdown_menu', 'breadcrumb_dropdown_menu_parent_item', 'main:');
+
+  $form['#validate'][] = 'breadcrumb_dropdown_menu_form_node_type_form_validate';
+  $form['#entity_builders'][] = 'breadcrumb_dropdown_menu_form_node_type_form_builder';
+}
+
+/**
+ * Submit handler for forms with Parent Menu Item options.
+ *
+ * @see breadcrumb_dropdown_menu_form_node_type_form_alter()
+ */
+function breadcrumb_dropdown_menu_form_node_type_form_validate(&$form, FormStateInterface $form_state) {
+
+}
+
+/**
+ * Entity builder for the node type form with Parent Menu Item options.
+ *
+ * @see breadcrumb_dropdown_menu_form_node_type_form_alter()
+ */
+function breadcrumb_dropdown_menu_form_node_type_form_builder($entity_type, NodeTypeInterface $type, &$form, FormStateInterface $form_state) {
+  $type->setThirdPartySetting('breadcrumb_dropdown_menu', 'breadcrumb_dropdown_menu_parent_item', $form_state->getValue('breadcrumb_dropdown_menu_parent_item'));
+}

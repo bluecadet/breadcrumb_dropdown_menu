@@ -1,0 +1,6 @@
+services:
+  breadcrumb_dropdown_menu.breadcrumb.default:
+    class: Drupal\breadcrumb_dropdown_menu\BreadcrumbDropdownBuilder
+    arguments: ['@config.factory', '@menu.active_trail', '@plugin.manager.menu.link', '@router.admin_context','@menu.link_tree']
+    tags:
+      - { name: breadcrumb_builder, priority: 100 }

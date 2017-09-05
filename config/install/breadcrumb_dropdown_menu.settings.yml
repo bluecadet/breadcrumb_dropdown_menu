@@ -1,0 +1,5 @@
+breadcrumb_dropdown_menus:
+  main:
+    enabled: 1
+    weight: -10
+title_max_length: ''

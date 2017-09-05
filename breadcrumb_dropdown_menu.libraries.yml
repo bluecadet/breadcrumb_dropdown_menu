@@ -1,0 +1,5 @@
+breadcrumb_dropdown_menu.breadcrumb_dropdown_menu.module:
+  version: 1.x
+  css:
+    theme:
+      css/breadcrumb_dropdown_menu.module.css: {}

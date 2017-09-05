@@ -1,0 +1,5 @@
+breadcrumb_dropdown_menu.settings:
+  title: Breadcrumb Dropdown Menu
+  description: 'Configure breadcrumb dropdown menu.'
+  route_name: breadcrumb_dropdown_menu.settings
+  parent: system.admin_config_ui

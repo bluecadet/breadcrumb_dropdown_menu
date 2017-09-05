@@ -1,0 +1,7 @@
+breadcrumb_dropdown_menu.settings:
+  path: '/admin/config/user-interface/breadcrumb-dropdown-menu'
+  defaults:
+    _title: 'Breadcrumb Dropdown Menu'
+    _form: '\Drupal\breadcrumb_dropdown_menu\Form\SettingsForm'
+  requirements:
+    _permission: 'administer site configuration'
