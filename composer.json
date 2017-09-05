@@ -1,0 +1,17 @@
+{
+  "name": "bluecadet/breadcrumb_dropdown_menu",
+  "description": "Provides collapsible blocks of menu items.",
+  "type": "custom-drupal-module",
+  "authors": [
+    {
+      "name": "",
+      "role": "Maintainer"
+    }
+  ],
+  "license": "GPL-2.0+",
+  "minimum-stability": "dev",
+  "require": {
+    "php": "^5.3.3 || ^7.0",
+    "composer/installers": "^1.0@dev"
+  }
+}
