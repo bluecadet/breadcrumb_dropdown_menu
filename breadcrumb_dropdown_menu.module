@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * The main file for the breadcrumb_dropdown_menu module.
- */
-
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
