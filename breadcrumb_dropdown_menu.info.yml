@@ -1,6 +1,7 @@
 name: Breadcrumb Dropdown Menu
 type: module
 description: 'Provides collapsible blocks of menu items.'
-package: NWWIIM Custom
+package: Bluecadet
 configure: breadcrumb_dropdown_menu.settings
 core: '8.x'
+version: '8.x-1.0'
